@@ -9,4 +9,8 @@ router.post('/:drawingId/like', auth, galleryController.like);
 router.delete('/:drawingId/like', auth, galleryController.unlike);
 router.get('/:drawingId/likes', galleryController.getLikes);
 
+router.get('/:drawingId/comments', galleryController.getComments);
+router.post('/:drawingId/comments', auth, galleryController.createComment);
+router.delete('/:drawingId/comments/:commentId', auth, galleryController.deleteComment);
+
 export default router;

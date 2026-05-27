@@ -1,5 +1,6 @@
 import { AppDataSource } from '../config/database';
 import { Drawing, LineData } from '../models/postgresql/Drawing';
+import { ForumPost } from '../models/postgresql/ForumPost';
 import { Stat } from '../models/postgresql/Stat';
 import { User } from '../models/postgresql/User';
 import { achievementService } from './achievementService';
@@ -10,6 +11,18 @@ export const drawingService = {
   async create(userId: string, blotId: string, lines: LineData[]) {
     const drawing = drawingRepo().create({ userId, blotId, lines });
     await drawingRepo().save(drawing);
+
+    const user = await AppDataSource.getRepository(User).findOne({ where: { id: userId } });
+    if (user) {
+      const postRepo = AppDataSource.getRepository(ForumPost);
+      const post = postRepo.create({
+        userId,
+        drawingId: drawing.id,
+        title: `Dibujo de ${user.name}`,
+        content: '',
+      });
+      await postRepo.save(post);
+    }
 
     const today = new Date().toISOString().split('T')[0];
     const statRepo = AppDataSource.getRepository(Stat);

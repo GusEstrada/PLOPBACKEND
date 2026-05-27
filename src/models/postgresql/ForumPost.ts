@@ -27,4 +27,7 @@ export class ForumPost {
 
   @OneToMany(() => ForumComment, (comment) => comment.post)
   comments: ForumComment[];
+
+  @Column({ type: 'uuid', nullable: true, unique: true })
+  drawingId: string | null;
 }
