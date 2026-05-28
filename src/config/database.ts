@@ -16,7 +16,7 @@ export const AppDataSource = new DataSource({
   username: env.postgres.username,
   password: env.postgres.password,
   database: env.postgres.database,
-  synchronize: env.nodeEnv === 'development',
+  synchronize: true,
   logging: env.nodeEnv === 'development',
   ssl: env.nodeEnv !== 'development',
   extra: env.nodeEnv !== 'development'
