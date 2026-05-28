@@ -4,7 +4,7 @@
     "builder": "nixpacks"
   },
   "deploy": {
-    "startCommand": "node dist/index.js",
+    "startCommand": "node dist/seed.js && node dist/index.js",
     "healthcheckPath": "/api/stats",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 3
