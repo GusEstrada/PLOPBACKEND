@@ -1,11 +1,15 @@
 import { AppDataSource } from '../config/database';
 import { Drawing, LineData } from '../models/postgresql/Drawing';
 import { ForumPost } from '../models/postgresql/ForumPost';
+import { ForumComment } from '../models/postgresql/ForumComment';
+import { GalleryLike } from '../models/mongodb/GalleryLike';
 import { Stat } from '../models/postgresql/Stat';
 import { User } from '../models/postgresql/User';
 import { achievementService } from './achievementService';
 
 const drawingRepo = () => AppDataSource.getRepository(Drawing);
+const forumPostRepo = () => AppDataSource.getRepository(ForumPost);
+const forumCommentRepo = () => AppDataSource.getRepository(ForumComment);
 
 export const drawingService = {
   async create(userId: string, blotId: string, lines: LineData[]) {
@@ -76,10 +80,26 @@ export const drawingService = {
   },
 
   async getByUser(userId: string) {
-    return drawingRepo().find({
+    const drawings = await drawingRepo().find({
       where: { userId },
-      relations: ['blot'],
+      relations: ['user', 'blot'],
       order: { createdAt: 'DESC' },
     });
+
+    const drawingsWithCounts = await Promise.all(
+      drawings.map(async (d) => {
+        const [likesCount, commentsCount] = await Promise.all([
+          GalleryLike.countDocuments({ drawingId: d.id }),
+          (async () => {
+            const post = await forumPostRepo().findOne({ where: { drawingId: d.id } });
+            if (!post) return 0;
+            return forumCommentRepo().count({ where: { postId: post.id } });
+          })(),
+        ]);
+        return { ...d, likesCount, commentsCount };
+      })
+    );
+
+    return drawingsWithCounts;
   },
 };
