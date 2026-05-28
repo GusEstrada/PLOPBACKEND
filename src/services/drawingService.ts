@@ -9,6 +9,7 @@ const drawingRepo = () => AppDataSource.getRepository(Drawing);
 
 export const drawingService = {
   async create(userId: string, blotId: string, lines: LineData[]) {
+    if (lines.length === 0) throw new Error('No puedes enviar un dibujo vacío');
     const drawing = drawingRepo().create({ userId, blotId, lines });
     await drawingRepo().save(drawing);
 
@@ -43,6 +44,16 @@ export const drawingService = {
     await achievementService.checkAndAward(userId);
 
     return drawing;
+  },
+
+  async delete(id: string, userId: string) {
+    const drawing = await drawingRepo().findOne({ where: { id } });
+    if (!drawing) throw new Error('Dibujo no encontrado');
+    if (drawing.userId !== userId) throw new Error('No puedes borrar un dibujo que no es tuyo');
+
+    await AppDataSource.getRepository(ForumPost).delete({ drawingId: id });
+    await drawingRepo().remove(drawing);
+    return { deleted: true };
   },
 
   async getAll(page = 1, limit = 20) {
