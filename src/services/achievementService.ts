@@ -1,6 +1,7 @@
 import { GalleryLike } from '../models/mongodb/GalleryLike';
 import { Achievement, IAchievement } from '../models/mongodb/Achievement';
 import { AppDataSource } from '../config/database';
+import { In } from 'typeorm';
 import { Drawing } from '../models/postgresql/Drawing';
 import { ForumPost } from '../models/postgresql/ForumPost';
 import { ForumComment } from '../models/postgresql/ForumComment';
@@ -20,7 +21,7 @@ export const achievementService = {
         const posts = await AppDataSource.getRepository(ForumPost).find({ where: { userId } });
         const postIds = posts.map(p => p.id);
         if (postIds.length === 0) return 0;
-        return AppDataSource.getRepository(ForumComment).count({ where: { postId: { $in: postIds } as any } });
+        return AppDataSource.getRepository(ForumComment).count({ where: { postId: In(postIds) } });
       })(),
     ]);
 
