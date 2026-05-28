@@ -18,6 +18,7 @@ import statsRoutes from './routes/stats';
 import forumRoutes from './routes/forum';
 import uploadRoutes from './routes/upload';
 import avatarCatalogRoutes from './routes/avatarCatalog';
+import achievementsRoutes from './routes/achievements';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/avatar-catalog', avatarCatalogRoutes);
+app.use('/api/achievements', achievementsRoutes);
 
 app.use(errorHandler);
 

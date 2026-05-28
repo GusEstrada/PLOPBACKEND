@@ -1,30 +1,42 @@
-import { Achievement } from '../models/mongodb/Achievement';
+import { GalleryLike } from '../models/mongodb/GalleryLike';
+import { Achievement, IAchievement } from '../models/mongodb/Achievement';
 import { AppDataSource } from '../config/database';
 import { Drawing } from '../models/postgresql/Drawing';
+import { ForumPost } from '../models/postgresql/ForumPost';
+import { ForumComment } from '../models/postgresql/ForumComment';
 
 const ACHIEVEMENTS = [
-  { code: 'first_drawing', title: 'Primer Trazo', description: 'Dibujaste por primera vez', icon: '🎨' },
-  { code: 'week_streak', title: 'Semana de Arte', description: 'Dibujaste 7 días seguidos', icon: '📅' },
-  { code: 'ten_drawings', title: 'Dedicatoria', description: 'Completaste 10 dibujos', icon: '✏️' },
-  { code: 'popular', title: 'Estrella', description: 'Tu dibujo recibió 10 likes', icon: '⭐' },
-  { code: 'forum_regular', title: 'Charlatán', description: 'Publicaste 5 veces en el foro', icon: '💬' },
+  { code: 'first_drawing', title: 'Primer Trazo', description: 'Dibujaste por primera vez', iconUrl: '/uploads/achievements/first_drawing.png' },
+  { code: 'first_like', title: 'Primer Like', description: 'Diste tu primer like', iconUrl: '/uploads/achievements/first_like.png' },
+  { code: 'first_comment', title: 'Primer Comentario', description: 'Comentaste por primera vez', iconUrl: '/uploads/achievements/first_comment.png' },
 ];
 
 export const achievementService = {
-  async checkAndAward(userId: string) {
-    const drawingsCount = await AppDataSource.getRepository(Drawing).count({
-      where: { userId },
-    });
+  async checkAndAwardAll(userId: string) {
+    const [drawingsCount, likesCount, commentsCount] = await Promise.all([
+      AppDataSource.getRepository(Drawing).count({ where: { userId } }),
+      GalleryLike.countDocuments({ userId }),
+      (async () => {
+        const posts = await AppDataSource.getRepository(ForumPost).find({ where: { userId } });
+        const postIds = posts.map(p => p.id);
+        if (postIds.length === 0) return 0;
+        return AppDataSource.getRepository(ForumComment).count({ where: { postId: { $in: postIds } as any } });
+      })(),
+    ]);
 
-    const newAchievements: string[] = [];
+    const newAchievements: IAchievement[] = [];
 
     if (drawingsCount >= 1) {
-      const awarded = await this.award(userId, ACHIEVEMENTS[0]);
-      if (awarded) newAchievements.push(ACHIEVEMENTS[0].code);
+      const a = await this.award(userId, ACHIEVEMENTS[0]);
+      if (a) newAchievements.push(a);
     }
-    if (drawingsCount >= 10) {
-      const awarded = await this.award(userId, ACHIEVEMENTS[2]);
-      if (awarded) newAchievements.push(ACHIEVEMENTS[2].code);
+    if (likesCount >= 1) {
+      const a = await this.award(userId, ACHIEVEMENTS[1]);
+      if (a) newAchievements.push(a);
+    }
+    if (commentsCount >= 1) {
+      const a = await this.award(userId, ACHIEVEMENTS[2]);
+      if (a) newAchievements.push(a);
     }
 
     return newAchievements;
@@ -32,13 +44,13 @@ export const achievementService = {
 
   async award(userId: string, ach: typeof ACHIEVEMENTS[0]) {
     const existing = await Achievement.findOne({ userId, code: ach.code });
-    if (existing) return false;
+    if (existing) return null;
 
-    await new Achievement({ userId, ...ach }).save();
-    return true;
+    const doc = await new Achievement({ userId, ...ach }).save();
+    return doc;
   },
 
   async getUserAchievements(userId: string) {
-    return Achievement.find({ userId, order: { unlockedAt: 'DESC' } });
+    return Achievement.find({ userId }).sort({ unlockedAt: -1 });
   },
 };

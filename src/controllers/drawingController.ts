@@ -21,9 +21,9 @@ export const drawingController = {
       res.status(400).json({ error: 'No puedes enviar un dibujo vacío' });
       return;
     }
-    const drawing = await drawingService.create(req.userId!, data.blotId, data.lines);
+    const result = await drawingService.create(req.userId!, data.blotId, data.lines);
     await DrawingSession.deleteOne({ userId: req.userId!, blotId: data.blotId });
-    res.status(201).json(drawing);
+    res.status(201).json(result);
   },
 
   async getAll(req: AuthRequest, res: Response) {

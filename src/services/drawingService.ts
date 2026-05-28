@@ -45,9 +45,9 @@ export const drawingService = {
       }));
     }
 
-    await achievementService.checkAndAward(userId);
+    const newAchievements = await achievementService.checkAndAwardAll(userId);
 
-    return drawing;
+    return { drawing, newAchievements };
   },
 
   async delete(id: string, userId: string) {

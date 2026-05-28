@@ -42,8 +42,8 @@ export const galleryController = {
 
   async createComment(req: AuthRequest, res: Response) {
     const data = createCommentSchema.parse(req.body);
-    const comment = await galleryService.createComment(req.userId!, req.params.drawingId as string, data.content);
-    res.status(201).json(comment);
+    const result = await galleryService.createComment(req.userId!, req.params.drawingId as string, data.content);
+    res.status(201).json(result);
   },
 
   async deleteComment(req: AuthRequest, res: Response) {

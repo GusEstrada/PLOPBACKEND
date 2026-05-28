@@ -3,6 +3,7 @@ import { AppDataSource } from '../config/database';
 import { Drawing } from '../models/postgresql/Drawing';
 import { ForumPost } from '../models/postgresql/ForumPost';
 import { ForumComment } from '../models/postgresql/ForumComment';
+import { achievementService } from './achievementService';
 
 const drawingRepo = () => AppDataSource.getRepository(Drawing);
 const forumPostRepo = () => AppDataSource.getRepository(ForumPost);
@@ -46,13 +47,15 @@ export const galleryService = {
     if (existing) throw new Error('Ya le diste like a este dibujo');
 
     await new GalleryLike({ userId, drawingId }).save();
-    return { liked: true };
+
+    const newAchievements = await achievementService.checkAndAwardAll(userId);
+    return { liked: true, newAchievements };
   },
 
   async unlikeDrawing(userId: string, drawingId: string) {
     const result = await GalleryLike.deleteOne({ userId, drawingId });
     if (result.deletedCount === 0) throw new Error('No habías dado like');
-    return { liked: false };
+    return { liked: false, newAchievements: [] };
   },
 
   async getLikesCount(drawingId: string) {
@@ -87,10 +90,13 @@ export const galleryService = {
     }
     const comment = forumCommentRepo().create({ userId, postId: post.id, content });
     await forumCommentRepo().save(comment);
-    return forumCommentRepo().findOne({
+    const saved = await forumCommentRepo().findOne({
       where: { id: comment.id },
       relations: ['user'],
     });
+
+    const newAchievements = await achievementService.checkAndAwardAll(userId);
+    return { comment: saved, newAchievements };
   },
 
   async deleteComment(commentId: string, userId: string) {

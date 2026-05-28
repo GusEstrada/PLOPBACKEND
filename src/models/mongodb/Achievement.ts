@@ -5,7 +5,7 @@ export interface IAchievement extends Document {
   code: string;
   title: string;
   description: string;
-  icon: string;
+  iconUrl: string;
   unlockedAt: Date;
 }
 
@@ -14,7 +14,7 @@ const AchievementSchema = new Schema<IAchievement>({
   code: { type: String, required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  icon: { type: String, default: '🏆' },
+  iconUrl: { type: String, default: '' },
   unlockedAt: { type: Date, default: Date.now },
 });
 
