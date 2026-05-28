@@ -17,6 +17,7 @@ async function seedBlots() {
     });
 
   const today = new Date();
+  today.setDate(today.getDate() + 1);
   let count = 0;
 
   for (const file of files) {
