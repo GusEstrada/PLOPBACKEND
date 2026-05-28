@@ -145,13 +145,25 @@ Puedes subir tu PNG de la mancha via `POST /api/blot/upload-image` (o directamen
 
 ### 1. Iniciar bases de datos (con Docker)
 ```bash
-docker run -d --name plop-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=plop -p 5434:5432 postgres:16-alpine
-docker run -d --name plop-mongo -p 27017:27017 mongo:7
+# PostgreSQL
+docker run -d --name plop-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=plop \
+  -p 5434:5432 \
+  postgres:16-alpine
+
+# MongoDB (opcional — solo si usas notificaciones/analytics)
+docker run -d --name plop-mongo \
+  -p 27017:27017 \
+  mongo:7
 ```
+
+> También puedes usar solo PostgreSQL sin Docker instalando [PostgreSQL](https://www.postgresql.org/download/) directo en tu máquina.
 
 ### 2. Configurar variables de entorno
 Editar `.env` (ya viene con defaults para local):
-```
+```env
 PORT=4000
 PG_HOST=localhost
 PG_PORT=5434
@@ -191,27 +203,32 @@ curl http://localhost:4000/api/blot/today
 ### Backend
 1. Subir repo a GitHub
 2. Railway → New Project → Deploy from GitHub repo
-3. Agregar variables de entorno en Railway Dashboard:
-   ```
+3. **Agregar PostgreSQL:**
+   - Railway → **New** → **Database** → **PostgreSQL**
+   - Railway genera automáticamente las credenciales (host, port, user, pass, db)
+4. **Configurar variables de entorno** en el backend service:
+   ```env
    NODE_ENV=production
-   PORT=4000
    JWT_SECRET=<clave-segura-aleatoria>
-   PG_HOST=<host-supabase>
-   PG_PORT=5432
-   PG_USERNAME=postgres
-   PG_PASSWORD=<password-supabase>
-   PG_DATABASE=postgres
-   MONGO_URI=<connection-string-mongodb-atlas>
-   CORS_ORIGIN=<url-vercel>
+   CORS_ORIGIN=<url-frontend>
    ```
+   Las de PostgreSQL las inyecta Railway automáticamente si el servicio está en el mismo proyecto.
+5. **Agregar MongoDB (opcional):**
+   Si usas MongoDB, puedes crear un cluster gratis en [MongoDB Atlas](https://www.mongodb.com/atlas) y agregar:
+   ```env
+   MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/plop
+   ```
+   Y en Atlas → **Network Access** → agregar IP `0.0.0.0/0` para que Railway pueda conectar.
+6. El `railway.json` ya tiene el startCommand correcto: `"node dist/index.js"`
+7. Railway redeploya automáticamente con cada `git push`.
 
 ### Frontend (Next.js)
-- Subir a Vercel
-- Agregar variable: `NEXT_PUBLIC_API_URL=https://<back-end>.railway.app`
+- Subir a Vercel desde el repo
+- Agregar variable: `API_URL=https://<backend>.railway.app`
 
 ### Servicios externos gratis
-- **Supabase** → PostgreSQL gratis (500MB)
-- **MongoDB Atlas M0** → MongoDB gratis (512MB)
+- **Railway PostgreSQL** — 1GB gratis (incluido en Railway)
+- **MongoDB Atlas M0** — MongoDB gratis (512MB, opcional)
 
 ---
 
