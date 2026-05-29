@@ -47,4 +47,13 @@ export const profileService = {
     await avatarRepo().save(avatar);
     return avatar;
   },
+
+  async uploadPhoto(userId: string, photoUrl: string) {
+    const user = await userRepo().findOne({ where: { id: userId } });
+    if (!user) throw new Error('Usuario no encontrado');
+
+    user.profilePhotoUrl = photoUrl;
+    await userRepo().save(user);
+    return user;
+  },
 };

@@ -23,6 +23,9 @@ export class User {
   @Column({ type: 'varchar', default: '' })
   bio: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  profilePhotoUrl: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

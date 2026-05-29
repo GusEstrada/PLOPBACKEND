@@ -34,4 +34,14 @@ export const profileController = {
     const avatar = await profileService.updateAvatar(req.userId!, data);
     res.json(avatar);
   },
+
+  async uploadPhoto(req: AuthRequest, res: Response) {
+    if (!req.file) {
+      res.status(400).json({ error: 'Archivo requerido' });
+      return;
+    }
+    const url = `/uploads/avatars/${req.file.filename}`;
+    const user = await profileService.uploadPhoto(req.userId!, url);
+    res.json({ profilePhotoUrl: user.profilePhotoUrl });
+  },
 };
