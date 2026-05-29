@@ -52,6 +52,15 @@ export const achievementService = {
   },
 
   async getUserAchievements(userId: string) {
-    return Achievement.find({ userId }).sort({ unlockedAt: -1 });
+    const docs = await Achievement.find({ userId }).sort({ unlockedAt: -1 });
+    const achMap = new Map(ACHIEVEMENTS.map(a => [a.code, a]));
+    for (const d of docs) {
+      const ach = achMap.get(d.code);
+      if (ach && !d.iconUrl) {
+        d.iconUrl = ach.iconUrl;
+        await d.save();
+      }
+    }
+    return docs;
   },
 };
