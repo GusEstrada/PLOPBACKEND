@@ -1,6 +1,7 @@
 import { AppDataSource } from '../config/database';
 import { User } from '../models/postgresql/User';
 import { AvatarConfig } from '../models/postgresql/AvatarConfig';
+import { logger } from '../utils/logger';
 
 const userRepo = () => AppDataSource.getRepository(User);
 const avatarRepo = () => AppDataSource.getRepository(AvatarConfig);
@@ -17,12 +18,16 @@ export const profileService = {
 
   async updateProfile(userId: string, data: { name?: string; bio?: string }) {
     const user = await userRepo().findOne({ where: { id: userId } });
-    if (!user) throw new Error('Usuario no encontrado');
+    if (!user) {
+      logger.warn({ userId, reason: 'not_found', action: 'update_profile' }, 'Intento de actualizar perfil de usuario inexistente');
+      throw new Error('Usuario no encontrado');
+    }
 
     if (data.name) user.name = data.name;
     if (data.bio !== undefined) user.bio = data.bio;
 
     await userRepo().save(user);
+    logger.info({ userId, fieldsUpdated: Object.keys(data), action: 'update_profile' }, 'Perfil actualizado');
     return user;
   },
 
@@ -45,15 +50,20 @@ export const profileService = {
     if (data.skinColor !== undefined) avatar.skinColor = data.skinColor;
 
     await avatarRepo().save(avatar);
+    logger.info({ userId, fieldsUpdated: Object.keys(data), action: 'update_avatar' }, 'Avatar actualizado');
     return avatar;
   },
 
   async uploadPhoto(userId: string, photoUrl: string) {
     const user = await userRepo().findOne({ where: { id: userId } });
-    if (!user) throw new Error('Usuario no encontrado');
+    if (!user) {
+      logger.warn({ userId, reason: 'not_found', action: 'upload_photo' }, 'Intento de subir foto a usuario inexistente');
+      throw new Error('Usuario no encontrado');
+    }
 
     user.profilePhotoUrl = photoUrl;
     await userRepo().save(user);
+    logger.info({ userId, action: 'upload_photo' }, 'Foto de perfil actualizada');
     return user;
   },
 };

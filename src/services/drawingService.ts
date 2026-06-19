@@ -6,6 +6,7 @@ import { GalleryLike } from '../models/mongodb/GalleryLike';
 import { Stat } from '../models/postgresql/Stat';
 import { User } from '../models/postgresql/User';
 import { achievementService } from './achievementService';
+import { logger } from '../utils/logger';
 
 const drawingRepo = () => AppDataSource.getRepository(Drawing);
 const forumPostRepo = () => AppDataSource.getRepository(ForumPost);
@@ -13,7 +14,10 @@ const forumCommentRepo = () => AppDataSource.getRepository(ForumComment);
 
 export const drawingService = {
   async create(userId: string, blotId: string, lines: LineData[]) {
-    if (lines.length === 0) throw new Error('No puedes enviar un dibujo vacío');
+    if (lines.length === 0) {
+      logger.warn({ userId, action: 'create_drawing_empty' }, 'Intento de guardar dibujo vacío');
+      throw new Error('No puedes enviar un dibujo vacío');
+    }
     const drawing = drawingRepo().create({ userId, blotId, lines });
     await drawingRepo().save(drawing);
 
@@ -47,16 +51,27 @@ export const drawingService = {
 
     const newAchievements = await achievementService.checkAndAwardAll(userId);
 
+    logger.info({ userId, drawingId: drawing.id, blotId, linesCount: lines.length, action: 'create_drawing' }, 'Dibujo creado exitosamente');
+
     return { drawing, newAchievements };
   },
 
   async delete(id: string, userId: string) {
     const drawing = await drawingRepo().findOne({ where: { id } });
-    if (!drawing) throw new Error('Dibujo no encontrado');
-    if (drawing.userId !== userId) throw new Error('No puedes borrar un dibujo que no es tuyo');
+    if (!drawing) {
+      logger.warn({ userId, drawingId: id, reason: 'not_found' }, 'Intento de eliminar dibujo inexistente');
+      throw new Error('Dibujo no encontrado');
+    }
+    if (drawing.userId !== userId) {
+      logger.warn({ userId, drawingId: id, ownerId: drawing.userId, reason: 'not_owner' }, 'Intento de eliminar dibujo ajeno');
+      throw new Error('No puedes borrar un dibujo que no es tuyo');
+    }
 
     await AppDataSource.getRepository(ForumPost).delete({ drawingId: id });
     await drawingRepo().remove(drawing);
+
+    logger.info({ userId, drawingId: id, action: 'delete_drawing' }, 'Dibujo eliminado');
+
     return { deleted: true };
   },
 

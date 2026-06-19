@@ -5,6 +5,7 @@ import { In } from 'typeorm';
 import { Drawing } from '../models/postgresql/Drawing';
 import { ForumPost } from '../models/postgresql/ForumPost';
 import { ForumComment } from '../models/postgresql/ForumComment';
+import { logger } from '../utils/logger';
 
 const ACHIEVEMENTS = [
   { code: 'first_drawing', title: 'Primer Trazo', description: 'Dibujaste por primera vez', iconUrl: '/uploads/achievements/first_drawing.png' },
@@ -48,6 +49,7 @@ export const achievementService = {
     if (existing) return null;
 
     const doc = await new Achievement({ userId, ...ach }).save();
+    logger.info({ userId, achievementCode: ach.code, achievementTitle: ach.title, action: 'award_achievement' }, 'Logro desbloqueado');
     return doc;
   },
 

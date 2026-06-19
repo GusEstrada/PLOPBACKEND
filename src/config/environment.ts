@@ -31,4 +31,6 @@ export const env = {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10),
   },
+
+  logRetentionDays: parseInt(process.env.LOG_RETENTION_DAYS || '30', 10),
 };

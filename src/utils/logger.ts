@@ -6,7 +6,17 @@ const targets: pino.TransportTargetOptions[] = [];
 
 if (env.nodeEnv === 'production') {
   targets.push(
-    { target: 'pino/file', options: { destination: path.join(__dirname, '../../logs/app.log'), mkdir: true }, level: 'info' },
+    {
+      target: 'pino-roll',
+      options: {
+        file: path.join(__dirname, '../../logs/app.log'),
+        frequency: 'daily',
+        mkdir: true,
+        size: '10M',
+        maxFiles: env.logRetentionDays,
+      },
+      level: 'info',
+    },
     { target: 'pino/file', options: {}, level: 'info' },
   );
 } else {
