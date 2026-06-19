@@ -30,6 +30,8 @@ app.use(express.json({ limit: '5mb' }));
 app.use(requestLogger);
 app.use('/uploads', express.static(path.join(__dirname, '..', env.upload.dir)));
 
+app.get('/', (_req, res) => res.json({ status: 'ok', service: 'plop-api' }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/blot', blotRoutes);
 app.use('/api/drawings', drawingRoutes);
